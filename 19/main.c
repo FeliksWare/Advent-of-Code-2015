@@ -116,6 +116,30 @@ size_t tree_count(const struct Tree *root) {
     return 1 + tree_count(root->left) + tree_count(root->right);
 }
 
+size_t reduce(const struct List *list, char *molecule, size_t count) {
+    if (strcmp(molecule, "e\n") == 0) {
+        return count;
+    }
+
+    for (size_t i = strlen(molecule); i > 0; i--) {
+        for (const struct List *current = list; current != NULL; current = current->next) {
+            if (strncmp(&molecule[i - 1], current->value, strlen(current->value)) != 0) continue;
+
+            struct Substitution substitution;
+            substitution.original = molecule;
+            substitution.start = &molecule[i - 1];
+            substitution.end = &molecule[i - 1 + strlen(current->value)];
+            substitution.substitution = current->key;
+
+            size_t temp = reduce(list, substitution_to_string(substitution), count + 1);
+            if (temp != SIZE_MAX) return temp;
+        }
+    }
+
+    free(molecule);
+    return SIZE_MAX;
+}
+
 int main(void) {
     struct List *list = NULL;
     struct Tree *tree = NULL;
@@ -152,6 +176,7 @@ int main(void) {
     }
 
     printf("Part 1: %zu\n", tree_count(tree));
+    printf("Part 2: %zu\n", reduce(list, duplicate_string(buffer), 0));
 
     return 0;
 }
